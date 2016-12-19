@@ -269,7 +269,7 @@
 (defn -main
 
   [& args]
-  (println "Welcome to the crappy text game! Type '/help' for list of commands.\n\n")
+  (println "Welcome to the teleport graph game! Type '/help' for list of commands.\n\n")
   (loop [local-map the-map
          local-player player]
     (let [pl (status local-player)
