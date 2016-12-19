@@ -17,6 +17,6 @@ Run either with default compiler on IDE or with lein run commands
 3. Grab book from locked room (use grab command in locked room)
 4. Make way to stables and use the computer, then victory. (use south command twice from base, then do /use and if you got the book you win. You can read the books as well!)
 
-Hint: Be careful about objects you pick up and consume. (various objects have different properties, too heavy (table) causes no movement, consumables can be positive or negative)
+Hint: Be careful about objects you pick up and consume. (various objects have different properties, too heavy (table) causes no movement, consumables can be positive or negative) -> every object with negative properties are dropable
 
 ## 
