@@ -13,15 +13,15 @@
            :contents "Table"
            :val 0
            :lock 1}
-   :Sewer {:desc "Dark and smelly in here... Oh god there are Rats! "
+   :Sewer {:desc "Dark and smelly in here... there are Rats! "
            :title "in the sewer"
            :dir {:north :Base,
                  :south :Stable}
            :contents "Rat"
            :val 0
            :lock 1}
-   :Final {:desc "The final room of the game... Here we go! "
-           :title "in the final room"
+   :Final {:desc "Very weird, nothing in here except a single book on the floor. I should read this. "
+           :title "in the book room"
            :dir {:west :Base}
            :contents "Book"
            :val 0
@@ -68,7 +68,7 @@
             :contents "Body"
             :val 0
             :lock 1}
-   :Stable {:desc "An old horse stable without horses, there is computer though. (Try 'use')"
+   :Stable {:desc "An old horse stable without horses, there is computer though. (Try 'use') "
             :title "in the stable"
             :dir {:north :Sewer}
             :contents "Hay"
@@ -79,7 +79,7 @@
               :dir {:east :Armory,
                     :south :Bathroom}
               :contents "Shirt"
-              :val 0
+              :val 1
               :lock 1}
    :Bathroom {:desc "This is a bathroom. "
               :title "in the bathroom"
@@ -158,7 +158,7 @@
 
 (defn tock [player]
   (let [val (get-in player [:puzVal])]
-   (if(>= val 4)
+   (if(>= val 3)
      (do (println (str "\nYou have succeeded. Check your value ('checkVal') for reward.\n")) (assoc-in player [:location] :Base))
      (do (println (str "\nYou have been teleported back to Base.\n")) (assoc-in (update-in player [:puzVal] inc) [:location] :Base)))))
    
@@ -186,7 +186,11 @@
         location  (get-in the-map [currLoc :contents])]
     (if(contains? inventory "Table")
      (do(println(str "\nYou dropped the Table, silly to pick up anyways.\n")) (update-in player [:inventory] #(disj % "Table")))
-     (do(println "\nYou do not have anything heavy that needs to be dropped.\n")player))))
+     (if (contains? inventory "Body")
+       (do (println (str "\nYou dropped the Body, poor guy.\n")) (update-in player [:inventory] #(disj % "Body")))
+       (if (contains? inventory "Potion")
+         (do (println (str "\nYou dropped the Potion, smelled funky anyways.\n")) (update-in player [:inventory] #(disj % "Potion")))
+         (do(println "\nYou do not have anything that needs to be dropped.\n")player))))))
       
 (defn inv [player]
   (do (println (seq (player :inventory)))
@@ -196,17 +200,19 @@
   (let [val (get-in player [:puzVal])
         inv (get-in player [:inventory])
         loc (player :location)]
-    (if(< val 4)
+    (if(< val 3)
       (do (println (str "\nCurrent val at " (-> player :puzVal) ". Need more to recieve prize.\n"))player)
       (do(println(str "\nYou're teleport strategy has reached 4. Key added to inv.\n")) (update-in player [:inventory] #(conj % "Key"))))))
 
-(defn unlock [player]
+(defn unlock [loc player]
   (let [inv (get-in player [:inventory])
-        loc (player [:location])
+        currRoom (player :location)
         final (get-in the-map [:Final])]
-    (if(contains? inv "Key")
-      (do (println (str "\nYou have unlocked the door!\n")) (update-in player [:locked] inc))
-      (do (println "\nYou do not have a Key yet.\n") player))))
+    (if(not= currRoom loc)
+      (do (println "You are not even by a locked door. ") player)
+      (if (contains? inv "Key")
+        (do (println (str "\nYou have unlocked the door!\n")) (update-in player [:locked] inc))
+        (do (println "\nYou do not have a Key yet.\n") player)))))
     
 (defn read [player]
   (let [inv (get-in player [:inventory])]
@@ -216,13 +222,14 @@
        (do (println "\n39210849032014893920148932. Take this to the stables and input in the computer.\nGet to the stables through the Sewer.\n") player) 
        (do (println "\nYou have no book to read.\n") player)))))
 
-(defn use [player]
+(defn use [loc player]
   (let [inv (get-in player [:inventory])
-        currRoom (player [:location])
-        stable (get-in the-map [currRoom :contents])]
-    (if(contains? inv "Book")
-      (do (println "Computer: Code Accepted. Player being ported to safety.\nCongrats you've won!!") (System/exit 0)) 
-      (do (println "You have nothing to use.") player))))
+        currRoom (player :location)]
+    (if(not= currRoom loc)
+      (do (println "You are not in the correct room to use this.") player)
+      (if(contains? inv "Book")
+        (do (println "Computer: Code Accepted. Player being ported to safety.\nCongrats you've won!!") (System/exit 0)) 
+        (do (println "You have nothing to use.") player)))))
 
 (defn consume [player]
   (let [inv (get-in player [:inventory])]
@@ -241,7 +248,7 @@
     (do (println (str "Your current health is " (-> player :hp) ". ")) player)))
     
 
-(def help "\nWelcome to the List of Commands\n\n1. 'north' or 'n' = move player north\n2. 'south or 's' = move player south\n3. 'east' or 'e' = move player east\n4. 'west' or 'w' = move player west\n5. 'search' = displays contents in room\n6. 'look' = Display current room\n7. 'grab' = Pick up contents in room\n8. 'inventory' or 'i' = Displays current inventory\n9. 'drop' = Drops items that weigh too much to carry\n10. 'home' = Teleports you back to base\n11. 'checkVal' = Checks your Teleportation Value\n12. 'unlock' = Attempts to unlock a locked door \n13. 'read' = Allows user to read book if picked up \n14. 'use' = Allows user to use specific item(s) \n15. 'consume' = Eats anything consumable in inventory\n16. 'checkHealth' = Displays current health\n17. 'help' = Displays list of commands\n")
+(def help "\nWelcome to the List of Commands - begin each command with '/'\n\n1. 'north' or 'n' = move player north\n2. 'south or 's' = move player south\n3. 'east' or 'e' = move player east\n4. 'west' or 'w' = move player west\n5. 'search' = displays contents in room\n6. 'look' = Display current room\n7. 'grab' = Pick up contents in room\n8. 'inventory' or 'i' = Displays current inventory\n9. 'drop' = Drops items that weigh too much to carry\n10. 'home' = Teleports you back to base\n11. 'puz' = Checks your Teleportation Value\n12. 'unlock' = Attempts to unlock a locked door \n13. 'read' = Allows user to read book if picked up \n14. 'use' = Allows user to use specific item(s) \n15. 'consume' = Eats anything consumable in inventory\n16. 'hp' = Displays current health\n17. 'help' = Displays list of commands\n")
 
 (defn respond [player command]
   (match command
@@ -256,12 +263,12 @@
          [:grab]           (pickup player)
          [(:or :i :inventory)] (inv player)
          [:drop]           (drop player)
-         [:checkVal]       (checkVal player)
-         [:unlock]         (unlock player)
+         [:puz]            (checkVal player)
+         [:unlock]         (unlock :Base player)
          [:read]           (read player)
-         [:use]            (use player)
+         [:use]            (use :Stable player)
          [:consume]        (consume player)
-         [:checkHealth]    (checkHealth player)
+         [:hp]             (checkHealth player)
     
          _ (do (println (str "That is not on the list, please refer to '/help'.")) player)))   
           
